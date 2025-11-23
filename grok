@@ -410,6 +410,10 @@ async function processSlashCommand(command, chatHistory, rl) {
                 ['/image', 'Generate images with Grok-2'],
                 ['/vision', 'Analyze an image'],
                 ['/tools', `Toggle function calling (currently: ${processSlashCommand.toolsEnabled ? 'ON' : 'OFF'})`],
+                ['/shell <cmd>', 'Execute shell command'],
+                ['/cwd', 'Show current working directory'],
+                ['/bg', 'List background processes'],
+                ['/tasks', 'View agent task list'],
                 ['/config', 'Configure settings'],
                 ['/export', 'Export conversation'],
                 ['/tokens', 'Show token usage'],
@@ -909,7 +913,111 @@ async function processSlashCommand(command, chatHistory, rl) {
                 console.log(chalk.dim('Grok can now create, read, and modify files for you.'));
             }
             return true;
-            
+
+        case '/shell':
+        case '/sh':
+            // Execute shell command directly
+            const shellCmd = input.substring(input.indexOf(' ') + 1).trim();
+            if (!shellCmd || shellCmd === '/shell' || shellCmd === '/sh') {
+                console.log(chalk.yellow('Usage: /shell <command>'));
+                return true;
+            }
+
+            try {
+                const { ShellManager } = require('./lib/shell');
+                if (!processSlashCommand.shellManager) {
+                    processSlashCommand.shellManager = new ShellManager();
+                }
+
+                const spinner = ora('Executing command...').start();
+                const result = await processSlashCommand.shellManager.execute(shellCmd);
+                spinner.stop();
+
+                console.log(chalk.cyan('\n--- Command Output ---'));
+                if (result.stdout) console.log(result.stdout);
+                if (result.stderr) console.log(chalk.yellow(result.stderr));
+                if (result.exitCode !== 0) {
+                    console.log(chalk.red(`Exit code: ${result.exitCode}`));
+                }
+                console.log(chalk.dim(`Duration: ${result.duration}ms`));
+            } catch (error) {
+                console.log(chalk.red(`Error: ${error.message}`));
+            }
+            return true;
+
+        case '/cwd':
+        case '/pwd':
+            // Show current working directory
+            try {
+                const { ShellManager } = require('./lib/shell');
+                if (!processSlashCommand.shellManager) {
+                    processSlashCommand.shellManager = new ShellManager();
+                }
+
+                const cwd = processSlashCommand.shellManager.getCwd();
+                console.log(chalk.cyan(`Current directory: ${cwd}`));
+            } catch (error) {
+                console.log(chalk.red(`Error: ${error.message}`));
+            }
+            return true;
+
+        case '/bg':
+        case '/background':
+            // List background processes
+            try {
+                const { ShellManager } = require('./lib/shell');
+                if (!processSlashCommand.shellManager) {
+                    processSlashCommand.shellManager = new ShellManager();
+                }
+
+                const session = processSlashCommand.shellManager.getSession();
+                const processes = session.listBackgroundProcesses();
+
+                if (processes.length === 0) {
+                    console.log(chalk.dim('No background processes'));
+                } else {
+                    const bgTable = new Table({
+                        head: ['ID', 'PID', 'Command', 'Status', 'Started'],
+                        style: { head: ['cyan'] }
+                    });
+
+                    processes.forEach(proc => {
+                        const status = proc.completed ?
+                            (proc.exitCode === 0 ? chalk.green('✓ Done') : chalk.red('✗ Failed')) :
+                            chalk.blue('Running');
+
+                        const started = new Date(proc.startTime).toLocaleTimeString();
+
+                        bgTable.push([
+                            proc.id,
+                            proc.pid,
+                            proc.command.substring(0, 40),
+                            status,
+                            started
+                        ]);
+                    });
+
+                    console.log('\n' + bgTable.toString() + '\n');
+                }
+            } catch (error) {
+                console.log(chalk.red(`Error: ${error.message}`));
+            }
+            return true;
+
+        case '/tasks':
+            // View agent task list
+            try {
+                const { TaskManager } = require('./lib/agent');
+                if (!processSlashCommand.taskManager) {
+                    processSlashCommand.taskManager = new TaskManager();
+                }
+
+                processSlashCommand.taskManager.display();
+            } catch (error) {
+                console.log(chalk.red(`Error: ${error.message}`));
+            }
+            return true;
+
         case '/exit':
         case '/quit':
             rl.close();

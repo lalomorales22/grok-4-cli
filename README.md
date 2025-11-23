@@ -35,6 +35,41 @@ A professional, feature-rich command-line interface for xAI's Grok API with adva
 - **Token Usage Tracking** - Monitor API usage and costs in real-time
 - **Automatic Rate Limit Handling** with exponential backoff
 
+### 🤖 Agentic Capabilities (NEW!)
+Inspired by Claude Code, Grok CLI now includes advanced autonomous capabilities:
+
+- **🐚 Enhanced Shell Commands** - Persistent shell sessions with working directory state
+  - Execute commands with `cd` that persists across calls
+  - Background process management for long-running tasks
+  - Real-time streaming output for commands
+  - Configurable timeouts and error handling
+
+- **📋 Task Planning & Management** - Intelligent task tracking and execution
+  - Break down complex operations into manageable steps
+  - Track task status (pending, in_progress, completed, failed)
+  - Dependency resolution and progress visualization
+  - Export/import task states for reproducibility
+
+- **⚡ Parallel Tool Execution** - Run multiple tools concurrently
+  - Execute up to 5 tools simultaneously
+  - Automatic dependency resolution
+  - Graceful error handling for parallel operations
+  - Sequential and dependency-based execution modes
+
+- **🔗 Tool Chaining** - Build complex multi-step workflows
+  - Chain multiple tools with conditional execution
+  - Process intermediate results with callbacks
+  - Stop on error or continue with fallbacks
+  - Compose reusable operation sequences
+
+**New Slash Commands:**
+- `/shell <cmd>` or `/sh <cmd>` - Execute shell commands
+- `/cwd` or `/pwd` - Show current working directory
+- `/bg` or `/background` - List background processes
+- `/tasks` - View agent task list and progress
+
+See [AGENT_FEATURES.md](AGENT_FEATURES.md) for detailed documentation.
+
 ### 📁 Data Management
 - **Persistent History** - Save and resume conversations
 - **Export Options** - Export to Markdown, JSON, HTML, or plain text
